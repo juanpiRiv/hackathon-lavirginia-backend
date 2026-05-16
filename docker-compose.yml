@@ -31,7 +31,7 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/lavirginia_backend?schema=public
       JWT_SECRET: cambia-este-secreto
     ports:
-      - "3000:3000"
+      - "3001:3000"
 
 volumes:
   postgres_data:
