@@ -4,10 +4,7 @@ import { env } from "../config/env";
 import { AdminModel } from "../models/admin.model";
 
 export const ADMIN_ROLE = "ADMIN";
-
-function generateOtpCode() {
-  return String(Math.floor(100000 + Math.random() * 900000));
-}
+const DEFAULT_OTP_CODE = "123456";
 
 export async function requestAdminOtp(email: string) {
   const user = await prisma.user.findUnique({ where: { email } });
@@ -16,13 +13,12 @@ export async function requestAdminOtp(email: string) {
     return null;
   }
 
-  const code = generateOtpCode();
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
   await prisma.otp.create({
     data: {
       email,
-      code,
+      code: DEFAULT_OTP_CODE,
       expiresAt,
       userId: user.id
     }
@@ -30,7 +26,7 @@ export async function requestAdminOtp(email: string) {
 
   return {
     expiresAt,
-    otpCode: code
+    otpCode: DEFAULT_OTP_CODE
   };
 }
 

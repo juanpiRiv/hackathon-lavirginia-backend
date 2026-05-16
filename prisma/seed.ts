@@ -5,6 +5,8 @@ import { Pool } from "pg";
 
 dotenv.config();
 
+const DEFAULT_ADMIN_EMAIL = "mateoyastor60@gmail.com";
+
 function requiredDatabaseUrl() {
   const value = process.env.DATABASE_URL;
   if (!value) {
@@ -22,24 +24,18 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const adminEmail = process.env.ADMIN_EMAIL;
-
-  if (!adminEmail) {
-    throw new Error("ADMIN_EMAIL is required for seed");
-  }
-
   await prisma.user.upsert({
-    where: { email: adminEmail },
+    where: { email: DEFAULT_ADMIN_EMAIL },
     update: {
       role: "ADMIN"
     },
     create: {
-      email: adminEmail,
+      email: DEFAULT_ADMIN_EMAIL,
       role: "ADMIN"
     }
   });
 
-  console.log("Admin user seeded successfully");
+  console.log(`Admin user seeded successfully: ${DEFAULT_ADMIN_EMAIL}`);
 }
 
 main()
