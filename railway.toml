@@ -1,6 +1,6 @@
 [build]
 builder = "dockerfile"
-dockerfilePath = "Dockerfile"
+dockerfilePath = "capsule_qc_mvp/Dockerfile"
 
 [deploy]
 healthcheckPath = "/v1/healthz"
