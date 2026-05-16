@@ -121,6 +121,29 @@ docker compose up --build
 
 El contenedor levanta, aplica el schema, hace seed del admin y arranca el servidor automáticamente.
 
+## Deploy simple a VPS
+
+Para una demo estable en una VPS, usar el stack dedicado de:
+
+```bash
+deploy/vps
+```
+
+Ese stack usa:
+- `caddy` con HTTPS automatico
+- `frontend` Next publico
+- `backend` Node privado
+- `python-model` FastAPI privado
+- `postgres` privado
+
+Guia rapida:
+- clonar backend y frontend como carpetas hermanas
+- copiar `deploy/vps/.env.example` a `deploy/vps/.env`
+- cargar artefactos del modelo en `deploy/vps/model_artifacts/`
+- levantar con `docker compose up -d --build`
+
+Ver detalle en [deploy/vps/README.md](./deploy/vps/README.md).
+
 ---
 
 ## Endpoints

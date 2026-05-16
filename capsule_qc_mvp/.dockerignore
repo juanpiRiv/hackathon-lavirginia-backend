@@ -1,0 +1,8 @@
+__pycache__
+.venv
+.pytest_cache
+artifacts
+dataset/curated
+dataset/exports
+dataset/runtime_import
+runtime_logs
