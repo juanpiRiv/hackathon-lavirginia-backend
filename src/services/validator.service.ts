@@ -61,6 +61,13 @@ function parseAndValidateAiResponse(raw: string): PackageValidatorResult | null 
   const coherentApproved = decision === "APROBADO";
   if (approved !== coherentApproved) return null;
 
+  // Para APROBADO todos los ejes deben pasar (false)
+  if (decision === "APROBADO") {
+    if (failed_axes.capsule_damage || failed_axes.capsule_disorder || failed_axes.packaging_damage) {
+      return null;
+    }
+  }
+
   if (decision === "APROBADO" && confidence < 0.85) {
     return {
       decision: "RECHAZADO",
