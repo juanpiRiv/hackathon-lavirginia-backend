@@ -1,0 +1,12 @@
+{
+  email {$CADDY_EMAIL}
+}
+
+{$DOMAIN} {
+  encode zstd gzip
+
+  @backend path /health /api/auth/* /api/admin/* /api/validator/* /demo/*
+  reverse_proxy @backend backend:3000
+
+  reverse_proxy frontend:3000
+}

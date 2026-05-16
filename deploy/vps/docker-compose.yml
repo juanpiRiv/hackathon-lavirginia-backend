@@ -1,0 +1,111 @@
+services:
+  caddy:
+    image: caddy:2.10-alpine
+    container_name: lavirginia-caddy
+    restart: unless-stopped
+    depends_on:
+      frontend:
+        condition: service_started
+      backend:
+        condition: service_started
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+      CADDY_EMAIL: ${CADDY_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+  frontend:
+    build:
+      context: ../../../hackathon_frontend
+      dockerfile: Dockerfile
+    container_name: lavirginia-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: ${FRONTEND_PORT:-3000}
+      BACKEND_URL: http://backend:3000
+      VALIDATOR_API_KEY: ${VALIDATOR_API_KEY}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  db:
+    image: postgres:16-alpine
+    container_name: lavirginia-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  python-model:
+    build:
+      context: ../../capsule_qc_mvp
+      dockerfile: Dockerfile
+    container_name: lavirginia-python-model
+    restart: unless-stopped
+    environment:
+      CAPSULE_QC_ALLOW_MISSING_MODEL: "false"
+      CAPSULE_QC_MODEL_PATH: /app/artifacts/current
+    volumes:
+      - ./model_artifacts:/app/artifacts/current:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/v1/healthz')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: lavirginia-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      python-model:
+        condition: service_healthy
+    environment:
+      PORT: ${BACKEND_PORT:-3000}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+      JWT_SECRET: ${JWT_SECRET}
+      VALIDATOR_API_KEY: ${VALIDATOR_API_KEY}
+      AI_GATEWAY_URL: ${AI_GATEWAY_URL}
+      AI_GATEWAY_API_KEY: ${AI_GATEWAY_API_KEY}
+      AI_GATEWAY_MODEL: ${AI_GATEWAY_MODEL}
+      AI_GATEWAY_TIMEOUT_MS: ${AI_GATEWAY_TIMEOUT_MS}
+      MAX_IMAGE_SIZE_MB: ${MAX_IMAGE_SIZE_MB}
+      PYTHON_MODEL_URL: http://python-model:8000
+      PYTHON_MODEL_TIMEOUT_MS: ${PYTHON_MODEL_TIMEOUT_MS}
+      PYTHON_MODEL_MODE: ${PYTHON_MODEL_MODE}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
