@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from capsule_qc.data.exporters import export_binary_imagefolder, split_records_by_item
+from capsule_qc.data.ingest import ingest_binary_folders
 from capsule_qc.data.manifest import load_manifest
 from capsule_qc.ml.training import train_binary_classifier
 
@@ -23,6 +24,23 @@ def _build_parser() -> argparse.ArgumentParser:
     export_parser.add_argument("--validation-ratio", type=float, default=0.2)
     export_parser.add_argument("--test-ratio", type=float, default=0.1)
     export_parser.add_argument("--seed", type=int, default=42)
+
+    prepare_parser = subparsers.add_parser(
+        "prepare-from-folders",
+        help="Normalize fotos desde carpetas OK/NO OK, generar metadata y exportar dataset binario",
+    )
+    prepare_parser.add_argument("--ok-dir", action="append", required=True, type=Path)
+    prepare_parser.add_argument("--no-ok-dir", action="append", required=True, type=Path)
+    prepare_parser.add_argument("--dataset-dir", required=True, type=Path)
+    prepare_parser.add_argument("--export-dir", required=True, type=Path)
+    prepare_parser.add_argument("--default-defect", default="otro_no_ok_visible")
+    prepare_parser.add_argument("--capture-session-id", default="session-auto")
+    prepare_parser.add_argument("--sku", default="sku-unknown")
+    prepare_parser.add_argument("--lot-id", default="lot-unknown")
+    prepare_parser.add_argument("--view", default="front")
+    prepare_parser.add_argument("--validation-ratio", type=float, default=0.2)
+    prepare_parser.add_argument("--test-ratio", type=float, default=0.1)
+    prepare_parser.add_argument("--seed", type=int, default=42)
 
     train_parser = subparsers.add_parser("train", help="Train a binary classifier from metadata")
     train_parser.add_argument("--manifest", required=True, type=Path)
@@ -66,6 +84,52 @@ def _cmd_export_imagefolder(
         seed=seed,
     )
     print(json.dumps(counts, indent=2))
+    return 0
+
+
+def _cmd_prepare_from_folders(
+    ok_dirs: list[Path],
+    no_ok_dirs: list[Path],
+    dataset_dir: Path,
+    export_dir: Path,
+    default_defect: str,
+    capture_session_id: str,
+    sku: str,
+    lot_id: str,
+    view: str,
+    validation_ratio: float,
+    test_ratio: float,
+    seed: int,
+) -> int:
+    result = ingest_binary_folders(
+        ok_dirs=ok_dirs,
+        no_ok_dirs=no_ok_dirs,
+        dataset_dir=dataset_dir,
+        default_defect=default_defect,
+        capture_session_id=capture_session_id,
+        sku=sku,
+        lot_id=lot_id,
+        view=view,
+    )
+    manifest_path = Path(str(result["manifest_path"]))
+    records = load_manifest(manifest_path)
+    export_counts = export_binary_imagefolder(
+        records=records,
+        base_dir=dataset_dir,
+        output_dir=export_dir,
+        validation_ratio=validation_ratio,
+        test_ratio=test_ratio,
+        seed=seed,
+    )
+    print(
+        json.dumps(
+            {
+                "ingested": result,
+                "exported": export_counts,
+            },
+            indent=2,
+        )
+    )
     return 0
 
 
@@ -115,6 +179,21 @@ def main() -> int:
             manifest=args.manifest,
             base_dir=args.base_dir,
             output_dir=args.output_dir,
+            validation_ratio=args.validation_ratio,
+            test_ratio=args.test_ratio,
+            seed=args.seed,
+        )
+    if args.command == "prepare-from-folders":
+        return _cmd_prepare_from_folders(
+            ok_dirs=args.ok_dir,
+            no_ok_dirs=args.no_ok_dir,
+            dataset_dir=args.dataset_dir,
+            export_dir=args.export_dir,
+            default_defect=args.default_defect,
+            capture_session_id=args.capture_session_id,
+            sku=args.sku,
+            lot_id=args.lot_id,
+            view=args.view,
             validation_ratio=args.validation_ratio,
             test_ratio=args.test_ratio,
             seed=args.seed,
