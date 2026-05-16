@@ -1,6 +1,6 @@
 import { env } from "../config/env";
 import { PACKAGE_VALIDATOR_SYSTEM_PROMPT, buildPackageValidatorUserPrompt } from "../prompts/package-validator.prompt";
-import { PackageValidatorResult, PolygonModelConsistency, ImageQuality } from "../types/validator";
+import { FailedAxes, ImageQuality, PackageValidatorResult } from "../types/validator";
 
 interface ValidatePackageParams {
   file: Express.Multer.File;
@@ -18,17 +18,23 @@ function fallbackRejection(reason: string, validatorSummary: string): PackageVal
     secondary_reasons: [],
     observations: [],
     validator_summary: validatorSummary,
-    polygon_model_consistency: "not_provided",
-    image_quality: "good",
+    failed_axes: { capsule_damage: false, capsule_disorder: false, packaging_damage: false },
+    image_quality: "poor",
   };
-}
-
-function isValidPolygonConsistency(value: unknown): value is PolygonModelConsistency {
-  return ["consistent", "inconsistent", "not_provided", "unknown_format"].includes(value as string);
 }
 
 function isValidImageQuality(value: unknown): value is ImageQuality {
   return ["good", "acceptable", "poor"].includes(value as string);
+}
+
+function isValidFailedAxes(value: unknown): value is FailedAxes {
+  if (typeof value !== "object" || value === null) return false;
+  const axes = value as Record<string, unknown>;
+  return (
+    typeof axes.capsule_damage === "boolean" &&
+    typeof axes.capsule_disorder === "boolean" &&
+    typeof axes.packaging_damage === "boolean"
+  );
 }
 
 function parseAndValidateAiResponse(raw: string): PackageValidatorResult | null {
@@ -40,7 +46,7 @@ function parseAndValidateAiResponse(raw: string): PackageValidatorResult | null 
     return null;
   }
 
-  const { decision, approved, confidence, reason, secondary_reasons, observations, validator_summary, polygon_model_consistency, image_quality } = parsed;
+  const { decision, approved, confidence, reason, secondary_reasons, observations, validator_summary, failed_axes, image_quality } = parsed;
 
   if (decision !== "APROBADO" && decision !== "RECHAZADO") return null;
   if (typeof approved !== "boolean") return null;
@@ -49,7 +55,7 @@ function parseAndValidateAiResponse(raw: string): PackageValidatorResult | null 
   if (!Array.isArray(secondary_reasons) || !secondary_reasons.every((r) => typeof r === "string")) return null;
   if (!Array.isArray(observations) || !observations.every((o) => typeof o === "string")) return null;
   if (typeof validator_summary !== "string") return null;
-  if (!isValidPolygonConsistency(polygon_model_consistency)) return null;
+  if (!isValidFailedAxes(failed_axes)) return null;
   if (!isValidImageQuality(image_quality)) return null;
 
   const coherentApproved = decision === "APROBADO";
@@ -60,11 +66,11 @@ function parseAndValidateAiResponse(raw: string): PackageValidatorResult | null 
       decision: "RECHAZADO",
       approved: false,
       confidence,
-      reason: "insufficient_information",
+      reason: "low_image_quality",
       secondary_reasons: secondary_reasons as string[],
       observations: observations as string[],
       validator_summary,
-      polygon_model_consistency,
+      failed_axes,
       image_quality,
     };
   }
@@ -77,7 +83,7 @@ function parseAndValidateAiResponse(raw: string): PackageValidatorResult | null 
     secondary_reasons: secondary_reasons as string[],
     observations: observations as string[],
     validator_summary,
-    polygon_model_consistency,
+    failed_axes,
     image_quality,
   };
 }
