@@ -1,0 +1,3 @@
+image_path,item_id,sku,lot_id,view,status,capsula_rota,capsula_desplazada_o_mal_alineada,capsula_faltante,packaging_roto_o_caja_danada,deformacion_visible,disposicion_anomala,otro_no_ok_visible
+curated/images/example_ok_001.jpg,item-0001,sku-demo,lot-a,front,ok,0,0,0,0,0,0,0
+curated/images/example_ng_001.jpg,item-0002,sku-demo,lot-a,front,no_ok,0,0,0,1,0,0,0

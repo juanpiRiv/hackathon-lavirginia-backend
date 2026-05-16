@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Demo Camara La Virginia</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Arial, sans-serif;
+        background: #f4efe7;
+        color: #1f1f1f;
+      }
+
+      body {
+        margin: 0;
+        padding: 24px;
+        background:
+          radial-gradient(circle at top left, rgba(181, 117, 48, 0.18), transparent 35%),
+          linear-gradient(180deg, #f7f1e6, #efe5d2);
+      }
+
+      main {
+        max-width: 960px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.86);
+        border: 1px solid rgba(122, 88, 37, 0.16);
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 20px 50px rgba(71, 47, 13, 0.14);
+      }
+
+      h1 {
+        margin-top: 0;
+        font-size: 2rem;
+      }
+
+      p {
+        line-height: 1.5;
+      }
+
+      .grid {
+        display: grid;
+        gap: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      }
+
+      .panel {
+        background: #fffaf2;
+        border: 1px solid rgba(122, 88, 37, 0.12);
+        border-radius: 16px;
+        padding: 16px;
+      }
+
+      label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+
+      input,
+      button,
+      select {
+        width: 100%;
+        box-sizing: border-box;
+        border-radius: 12px;
+        border: 1px solid #d3c6af;
+        padding: 10px 12px;
+        font-size: 1rem;
+      }
+
+      button {
+        cursor: pointer;
+        border: none;
+        background: #7b4720;
+        color: #fff;
+        font-weight: 700;
+        margin-top: 8px;
+      }
+
+      button.secondary {
+        background: #d9cbb5;
+        color: #33251b;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      .actions {
+        display: grid;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      video,
+      canvas,
+      img {
+        width: 100%;
+        border-radius: 16px;
+        background: #ddd2c1;
+      }
+
+      pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        background: #241912;
+        color: #f5ede3;
+        border-radius: 16px;
+        padding: 16px;
+        min-height: 180px;
+        overflow-x: auto;
+      }
+
+      .hint {
+        font-size: 0.9rem;
+        color: #5f4d3b;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Demo de camara para validacion</h1>
+      <p>
+        Esta pagina abre la camara del dispositivo, captura una foto y la manda al backend en el mismo formato
+        <code>multipart/form-data</code> que usa el endpoint productivo.
+      </p>
+
+      <div class="grid">
+        <section class="panel">
+          <label for="apiBaseUrl">Base URL del backend</label>
+          <input id="apiBaseUrl" type="text" value="" />
+
+          <label for="apiKey">API key</label>
+          <input id="apiKey" type="text" value="validator-dev-key" />
+
+          <label for="fileInput">Subir una foto manualmente</label>
+          <input id="fileInput" type="file" accept="image/*" />
+
+          <div class="actions">
+            <button id="startCameraButton" type="button">Abrir camara</button>
+            <button id="captureButton" type="button" disabled>Capturar foto</button>
+            <button id="sendCaptureButton" type="button" disabled>Enviar captura</button>
+            <button id="sendFileButton" type="button" class="secondary">Enviar archivo seleccionado</button>
+          </div>
+
+          <p class="hint">
+            En celular, esta misma pagina sirve para usar la camara trasera y mandar la imagen al backend.
+          </p>
+        </section>
+
+        <section class="panel">
+          <video id="cameraPreview" autoplay playsinline muted></video>
+          <canvas id="captureCanvas" hidden></canvas>
+          <img id="capturedImage" alt="Vista previa captura" hidden />
+        </section>
+      </div>
+
+      <section class="panel" style="margin-top: 20px">
+        <h2>Respuesta</h2>
+        <pre id="result">Esperando una captura o un archivo...</pre>
+      </section>
+    </main>
+
+    <script>
+      const apiBaseUrlInput = document.getElementById("apiBaseUrl");
+      const apiKeyInput = document.getElementById("apiKey");
+      const fileInput = document.getElementById("fileInput");
+      const startCameraButton = document.getElementById("startCameraButton");
+      const captureButton = document.getElementById("captureButton");
+      const sendCaptureButton = document.getElementById("sendCaptureButton");
+      const sendFileButton = document.getElementById("sendFileButton");
+      const cameraPreview = document.getElementById("cameraPreview");
+      const captureCanvas = document.getElementById("captureCanvas");
+      const capturedImage = document.getElementById("capturedImage");
+      const resultBox = document.getElementById("result");
+
+      let mediaStream = null;
+      let capturedBlob = null;
+
+      const storedApiBaseUrl = window.localStorage.getItem("camera-demo-api-base-url");
+      const storedApiKey = window.localStorage.getItem("camera-demo-api-key");
+
+      apiBaseUrlInput.value = storedApiBaseUrl || window.location.origin;
+      if (storedApiKey) {
+        apiKeyInput.value = storedApiKey;
+      }
+
+      function persistSettings() {
+        window.localStorage.setItem("camera-demo-api-base-url", apiBaseUrlInput.value.trim());
+        window.localStorage.setItem("camera-demo-api-key", apiKeyInput.value.trim());
+      }
+
+      async function startCamera() {
+        persistSettings();
+
+        if (mediaStream) {
+          mediaStream.getTracks().forEach((track) => track.stop());
+        }
+
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" } },
+          audio: false,
+        });
+
+        cameraPreview.srcObject = mediaStream;
+        captureButton.disabled = false;
+        resultBox.textContent = "Camara activa. Captura cuando veas la caja centrada.";
+      }
+
+      function capturePhoto() {
+        if (!mediaStream) {
+          resultBox.textContent = "Primero abrí la camara.";
+          return;
+        }
+
+        const width = cameraPreview.videoWidth || 1280;
+        const height = cameraPreview.videoHeight || 720;
+        captureCanvas.width = width;
+        captureCanvas.height = height;
+
+        const context = captureCanvas.getContext("2d");
+        context.drawImage(cameraPreview, 0, 0, width, height);
+
+        captureCanvas.toBlob((blob) => {
+          if (!blob) {
+            resultBox.textContent = "No se pudo generar la captura.";
+            return;
+          }
+
+          capturedBlob = blob;
+          capturedImage.src = URL.createObjectURL(blob);
+          capturedImage.hidden = false;
+          sendCaptureButton.disabled = false;
+          resultBox.textContent = "Captura lista para enviar.";
+        }, "image/jpeg", 0.92);
+      }
+
+      async function sendImage(blob, filename) {
+        persistSettings();
+
+        const apiBaseUrl = apiBaseUrlInput.value.trim().replace(/\/$/, "");
+        const apiKey = apiKeyInput.value.trim();
+
+        if (!apiBaseUrl) {
+          resultBox.textContent = "Completá la base URL del backend.";
+          return;
+        }
+
+        if (!apiKey) {
+          resultBox.textContent = "Completá la API key.";
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("image", blob, filename);
+
+        resultBox.textContent = "Enviando imagen al backend...";
+
+        try {
+          const response = await fetch(`${apiBaseUrl}/api/validator/validate-package`, {
+            method: "POST",
+            headers: {
+              "x-api-key": apiKey,
+            },
+            body: formData,
+          });
+
+          const payload = await response.json();
+          resultBox.textContent = JSON.stringify(
+            {
+              http_status: response.status,
+              payload,
+            },
+            null,
+            2,
+          );
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          resultBox.textContent = `Error enviando la imagen: ${message}`;
+        }
+      }
+
+      startCameraButton.addEventListener("click", async () => {
+        try {
+          await startCamera();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          resultBox.textContent = `No se pudo abrir la camara: ${message}`;
+        }
+      });
+
+      captureButton.addEventListener("click", capturePhoto);
+
+      sendCaptureButton.addEventListener("click", async () => {
+        if (!capturedBlob) {
+          resultBox.textContent = "Primero capturá una foto.";
+          return;
+        }
+        await sendImage(capturedBlob, "camera-capture.jpg");
+      });
+
+      sendFileButton.addEventListener("click", async () => {
+        const file = fileInput.files && fileInput.files[0];
+        if (!file) {
+          resultBox.textContent = "Seleccioná un archivo primero.";
+          return;
+        }
+        capturedImage.src = URL.createObjectURL(file);
+        capturedImage.hidden = false;
+        await sendImage(file, file.name);
+      });
+    </script>
+  </body>
+</html>

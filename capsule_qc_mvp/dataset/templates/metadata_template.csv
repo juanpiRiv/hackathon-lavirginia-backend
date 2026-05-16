@@ -1,0 +1,3 @@
+image_path,item_id,sku,lot_id,view,status,primary_defect,all_defects,capture_session_id,notes
+curated/images/example_ok_001.jpg,item-0001,sku-demo,lot-a,front,ok,,,session-a,ejemplo de unidad sana
+curated/images/example_ng_001.jpg,item-0002,sku-demo,lot-a,front,no_ok,packaging_roto_o_caja_danada,packaging_roto_o_caja_danada,session-a,ejemplo de unidad defectuosa
