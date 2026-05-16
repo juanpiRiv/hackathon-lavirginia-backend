@@ -1,0 +1,16 @@
+{
+  "architecture": "simple_cnn",
+  "labels": [
+    "ok",
+    "no_ok"
+  ],
+  "image_size": 224,
+  "threshold": 0.5,
+  "defect_labels": [],
+  "validation_metrics": {
+    "accuracy": 0.0,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+  }
+}
