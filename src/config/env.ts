@@ -23,4 +23,6 @@ export const env = {
   aiGatewayModel: process.env.AI_GATEWAY_MODEL ?? "gpt-4o-mini",
   aiGatewayTimeoutMs: Number(process.env.AI_GATEWAY_TIMEOUT_MS ?? 30000),
   maxImageSizeMb: Number(process.env.MAX_IMAGE_SIZE_MB ?? 10),
+  pythonModelUrl: process.env.PYTHON_MODEL_URL ?? "http://localhost:8000",
+  pythonModelTimeoutMs: Number(process.env.PYTHON_MODEL_TIMEOUT_MS ?? 5000),
 };
