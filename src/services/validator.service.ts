@@ -136,7 +136,6 @@ export async function validatePackage({
       },
     ],
     temperature: 0,
-    response_format: { type: "json_object" },
   };
 
   let response: Response;
@@ -158,7 +157,8 @@ export async function validatePackage({
   }
 
   if (!response.ok) {
-    console.error(`[validator] [${requestId}] AI Gateway returned HTTP ${response.status}`);
+    const errBody = await response.text().catch(() => "");
+    console.error(`[validator] [${requestId}] AI Gateway HTTP ${response.status}: ${errBody.slice(0, 300)}`);
     return fallbackRejection("ai_gateway_error", "Error interno de validación: respuesta inválida del AI Gateway.");
   }
 
