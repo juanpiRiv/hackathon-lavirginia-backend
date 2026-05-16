@@ -5,7 +5,7 @@ import { Pool } from "pg";
 
 dotenv.config();
 
-const DEFAULT_ADMIN_EMAIL = "mateoyastor60@gmail.com";
+const DEFAULT_ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "mateoyastor60@gmail.com";
 
 function requiredDatabaseUrl() {
   const value = process.env.DATABASE_URL;
