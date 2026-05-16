@@ -17,6 +17,26 @@ services:
       timeout: 3s
       retries: 20
 
+  python-model:
+    build:
+      context: ./capsule_qc_mvp
+      dockerfile: Dockerfile
+    container_name: lavirginia-python-model
+    restart: unless-stopped
+    environment:
+      CAPSULE_QC_ALLOW_MISSING_MODEL: "true"
+      CAPSULE_QC_MODEL_PATH: artifacts/current
+    volumes:
+      - ./capsule_qc_mvp/artifacts:/app/artifacts
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/v1/healthz')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
   backend:
     build:
       context: .
@@ -36,6 +56,8 @@ services:
       AI_GATEWAY_MODEL: opencode-go/kimi-k2.6
       AI_GATEWAY_TIMEOUT_MS: 30000
       MAX_IMAGE_SIZE_MB: 10
+      PYTHON_MODEL_URL: http://python-model:8000
+      PYTHON_MODEL_TIMEOUT_MS: 5000
     ports:
       - "3001:3000"
 

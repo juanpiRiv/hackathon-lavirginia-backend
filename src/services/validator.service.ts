@@ -1,5 +1,6 @@
 import { env } from "../config/env";
 import { PACKAGE_VALIDATOR_SYSTEM_PROMPT, buildPackageValidatorUserPrompt } from "../prompts/package-validator.prompt";
+import { callPythonModel } from "./python-model.service";
 import { FailedAxes, ImageQuality, PackageValidatorResult } from "../types/validator";
 
 interface ValidatePackageParams {
@@ -101,8 +102,11 @@ export async function validatePackage({
   polygonModelOutput,
   requestId,
 }: ValidatePackageParams): Promise<PackageValidatorResult> {
+  const pythonResult = await callPythonModel(file, requestId);
+  const resolvedPolygonOutput = pythonResult ?? polygonModelOutput;
+
   const base64Image = file.buffer.toString("base64");
-  const userPrompt = buildPackageValidatorUserPrompt({ packageMetadata, polygonModelOutput });
+  const userPrompt = buildPackageValidatorUserPrompt({ packageMetadata, polygonModelOutput: resolvedPolygonOutput });
 
   const payload = {
     model: env.aiGatewayModel,
