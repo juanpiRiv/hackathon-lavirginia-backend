@@ -29,18 +29,11 @@ function resolveFailedAxes(defectTypes: string[]) {
     hasToken(value, ["faltante", "missing", "desplazada", "alineada", "disposicion", "disorder"]),
   );
 
-  if (!packaging && !capsuleDamage && !capsuleDisorder) {
-    return {
-      capsule_damage: false,
-      capsule_disorder: true,
-      packaging_damage: false,
-    };
-  }
-
+  // Semantica solicitada: true = eje OK, false = eje NO OK.
   return {
-    capsule_damage: capsuleDamage,
-    capsule_disorder: capsuleDisorder,
-    packaging_damage: packaging,
+    capsule_damage: !capsuleDamage,
+    capsule_disorder: !capsuleDisorder,
+    packaging_damage: !packaging,
   };
 }
 
@@ -57,9 +50,9 @@ export function mapPythonModelResultToPackageValidatorResult(
       observations: [],
       validator_summary: `Aprobado por modelo Python ${pythonResult.model_version}.`,
       failed_axes: {
-        capsule_damage: false,
-        capsule_disorder: false,
-        packaging_damage: false,
+        capsule_damage: true,
+        capsule_disorder: true,
+        packaging_damage: true,
       },
       image_quality: "acceptable",
     };
@@ -84,15 +77,18 @@ export function mapPythonModelResultToPackageValidatorResult(
 
   const primaryReason = resolvePrimaryReason(defectTypes);
   const failedAxes = resolveFailedAxes(defectTypes);
+  const hasAnyAxisFalse = !failedAxes.capsule_damage || !failedAxes.capsule_disorder || !failedAxes.packaging_damage;
 
   return {
-    decision: "RECHAZADO",
-    approved: false,
+    decision: hasAnyAxisFalse ? "RECHAZADO" : "APROBADO",
+    approved: !hasAnyAxisFalse,
     confidence: pythonResult.confidence,
-    reason: primaryReason,
+    reason: hasAnyAxisFalse ? primaryReason : "package_looks_correct",
     secondary_reasons: defectTypes.slice(1),
     observations: descriptions,
-    validator_summary: `Rechazado por modelo Python ${pythonResult.model_version}.`,
+    validator_summary: hasAnyAxisFalse
+      ? `Rechazado por modelo Python ${pythonResult.model_version}.`
+      : `Aprobado por modelo Python ${pythonResult.model_version}.`,
     failed_axes: failedAxes,
     image_quality: "acceptable",
   };
