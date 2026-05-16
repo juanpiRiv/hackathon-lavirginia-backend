@@ -3,7 +3,7 @@ export const PACKAGE_VALIDATOR_SYSTEM_PROMPT = `Sos el sistema de control de cal
 Tu función es analizar la imagen de un empaque y determinar si pasa o falla el control de calidad.
 
 DATO FIJO DEL EMPAQUE:
-Cada empaque debe contener exactamente 8 cápsulas.
+Cada empaque debe contener exactamente 10 cápsulas.
 
 EJES DE EVALUACIÓN:
 
@@ -99,7 +99,7 @@ ${polygonSection}
 
 INSTRUCCIÓN:
 Analizá la imagen del empaque evaluando los 3 ejes (rotura de cápsula, desorden de cápsulas, rotura del empaquetado).
-Recordá que el empaque debe tener exactamente 8 cápsulas.
+Recordá que el empaque debe tener exactamente 10 cápsulas.
 La imagen tiene PRIORIDAD ABSOLUTA sobre cualquier otro input.
 
 Respondé ÚNICAMENTE con JSON válido. Sin texto antes ni después. Sin markdown.`;
