@@ -12,7 +12,11 @@ function requireVars(rawEnv: RawEnv, requiredVars: readonly string[]) {
 }
 
 export function buildEnv(rawEnv: RawEnv) {
-  const pythonModelMode = rawEnv.PYTHON_MODEL_MODE ?? "assist";
+  const normalizedMode = (rawEnv.PYTHON_MODEL_MODE ?? "assist")
+    .replace(/['"]/g, "")
+    .trim()
+    .toLowerCase();
+  const pythonModelMode = normalizedMode === "direct" ? "direct" : "assist";
 
   requireVars(rawEnv, ["JWT_SECRET", "VALIDATOR_API_KEY"]);
   if (pythonModelMode !== "direct") {
