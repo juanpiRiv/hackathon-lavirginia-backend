@@ -32,6 +32,32 @@ AI Gateway (OpenCode GO / Kimi K2.6)
 - ESLint 10 + typescript-eslint
 - GitHub Actions CI
 
+## Modulo local de ML
+
+Este repo ahora incluye un subproyecto Python en [capsule_qc_mvp](./capsule_qc_mvp) para trabajar el MVP de entrenamiento e inferencia local del clasificador de cajas/capsulas.
+
+Alcance del modulo:
+- dataset propio con `metadata.csv`
+- clasificacion binaria `ok/no_ok`
+- API FastAPI para `1 foto = 1 caja`
+- Docker listo para VPS
+
+Comandos base:
+
+```bash
+cd capsule_qc_mvp
+python -m pip install -e .
+python -m unittest discover -s tests -v
+python -m capsule_qc.cli validate-manifest --manifest dataset/curated/metadata.csv
+python -m capsule_qc.cli train --manifest dataset/curated/metadata.csv --base-dir dataset --artifact-dir artifacts/current
+```
+
+Templates utiles:
+- [capsule_qc_mvp/dataset/templates/metadata_template.csv](./capsule_qc_mvp/dataset/templates/metadata_template.csv)
+- [capsule_qc_mvp/dataset/templates/multilabel_template.csv](./capsule_qc_mvp/dataset/templates/multilabel_template.csv)
+
+Nota: este modulo no reemplaza todavia el flujo actual con AI Gateway. Convive en paralelo para que el equipo pueda entrenar, evaluar y evolucionar el modelo propio mientras mantienen operativo el backend Node actual.
+
 ---
 
 ## Configuración
