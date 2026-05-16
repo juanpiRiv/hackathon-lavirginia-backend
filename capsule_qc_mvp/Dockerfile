@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY capsule_qc_mvp/src /app/src
 COPY capsule_qc_mvp/pyproject.toml capsule_qc_mvp/README.md /app/
+COPY capsule_qc_mvp/artifacts /app/artifacts
 
 ENV PYTHONPATH=/app/src
 
