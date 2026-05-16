@@ -11,7 +11,9 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:push": "prisma db push",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix"
   },
   "engines": {
     "node": ">=18"
@@ -25,14 +27,18 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.1.1",
     "pg": "^8.20.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.1",
     "@types/jsonwebtoken": "^9.0.7",
+    "@types/multer": "^2.1.0",
     "@types/node": "^22.10.2",
+    "eslint": "^10.4.0",
     "prisma": "^7.8.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.59.3"
   }
 }
