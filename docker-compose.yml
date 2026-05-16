@@ -30,6 +30,12 @@ services:
       PORT: 3000
       DATABASE_URL: postgresql://postgres:postgres@db:5432/lavirginia_backend?schema=public
       JWT_SECRET: cambia-este-secreto
+      VALIDATOR_API_KEY: validator-dev-key
+      AI_GATEWAY_URL: https://opencode.ai/zen/go/v1/chat/completions
+      AI_GATEWAY_API_KEY: PONER_ACA_TU_OPENCODE_KEY
+      AI_GATEWAY_MODEL: opencode-go/kimi-k2.6
+      AI_GATEWAY_TIMEOUT_MS: 30000
+      MAX_IMAGE_SIZE_MB: 10
     ports:
       - "3001:3000"
 
