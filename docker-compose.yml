@@ -58,6 +58,7 @@ services:
       MAX_IMAGE_SIZE_MB: 10
       PYTHON_MODEL_URL: http://python-model:8000
       PYTHON_MODEL_TIMEOUT_MS: 5000
+      PYTHON_MODEL_MODE: direct
     ports:
       - "3001:3000"
 

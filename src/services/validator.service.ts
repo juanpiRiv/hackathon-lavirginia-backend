@@ -1,6 +1,7 @@
 import { env } from "../config/env";
 import { PACKAGE_VALIDATOR_SYSTEM_PROMPT, buildPackageValidatorUserPrompt } from "../prompts/package-validator.prompt";
 import { callPythonModel } from "./python-model.service";
+import { mapPythonModelResultToPackageValidatorResult } from "./python-model.mapper";
 import { FailedAxes, ImageQuality, PackageValidatorResult } from "../types/validator";
 
 interface ValidatePackageParams {
@@ -103,6 +104,9 @@ export async function validatePackage({
   requestId,
 }: ValidatePackageParams): Promise<PackageValidatorResult> {
   const pythonResult = await callPythonModel(file, requestId);
+  if (env.pythonModelMode === "direct" && pythonResult) {
+    return mapPythonModelResultToPackageValidatorResult(pythonResult);
+  }
   const resolvedPolygonOutput = pythonResult ?? polygonModelOutput;
 
   const base64Image = file.buffer.toString("base64");

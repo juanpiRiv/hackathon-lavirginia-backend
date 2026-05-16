@@ -4,3 +4,7 @@ __pycache__/
 artifacts/
 .pytest_cache/
 *.egg-info/
+dataset/curated/
+dataset/exports/
+dataset/runtime_import/
+runtime_logs/

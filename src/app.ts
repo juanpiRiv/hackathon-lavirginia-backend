@@ -1,3 +1,4 @@
+import path from "path";
 import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import authRoutes from "./routes/auth.routes";
@@ -5,6 +6,7 @@ import adminRoutes from "./routes/admin.routes";
 import validatorRoutes from "./routes/validator.routes";
 
 const app = express();
+const publicDir = path.resolve(__dirname, "../public");
 
 app.use(
   cors({
@@ -12,9 +14,14 @@ app.use(
   })
 );
 app.use(express.json());
+app.use("/demo", express.static(publicDir));
 
 app.get("/health", (_req: Request, res: Response) => {
   return res.status(200).json({ ok: true, service: "lavirginia-backend" });
+});
+
+app.get("/demo/camera", (_req: Request, res: Response) => {
+  return res.sendFile(path.join(publicDir, "camera-demo.html"));
 });
 
 app.use("/api/auth", authRoutes);

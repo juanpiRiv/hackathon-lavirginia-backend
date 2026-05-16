@@ -189,6 +189,36 @@ Campos:
 }
 ```
 
+### Modo de integracion con modelo Python
+
+El backend soporta dos modos:
+
+- `PYTHON_MODEL_MODE=assist`
+  El backend llama al modelo Python y usa su salida como contexto para el AI Gateway.
+- `PYTHON_MODEL_MODE=direct`
+  El backend llama al modelo Python y devuelve la decision local directamente, sin depender del AI Gateway para esa validacion.
+
+Para demo rapida con el modelo entrenado localmente, usar `PYTHON_MODEL_MODE=direct`.
+
+### Demo con camara o foto manual
+
+Si queres probar sin frontend dedicado, el backend expone una pagina de demo:
+
+```bash
+GET /demo/camera
+```
+
+Flujo:
+- abre la camara del dispositivo
+- captura una foto
+- la envia al backend como `multipart/form-data`
+- muestra el JSON de respuesta en pantalla
+
+Notas:
+- en local funciona bien sobre `http://localhost`
+- en un VPS remoto, la camara del navegador normalmente requiere `https`
+- el endpoint que usa la demo es el mismo endpoint productivo: `POST /api/validator/validate-package`
+
 **Códigos de error:**
 
 | Código | Motivo |
