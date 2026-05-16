@@ -104,8 +104,12 @@ export async function validatePackage({
   requestId,
 }: ValidatePackageParams): Promise<PackageValidatorResult> {
   const pythonResult = await callPythonModel(file, requestId);
-  if (env.pythonModelMode === "direct" && pythonResult) {
-    return mapPythonModelResultToPackageValidatorResult(pythonResult);
+  if (env.pythonModelMode === "direct") {
+    if (pythonResult) {
+      return mapPythonModelResultToPackageValidatorResult(pythonResult);
+    }
+    console.error(`[validator] [${requestId}] direct mode: Python model unavailable`);
+    return fallbackRejection("ai_gateway_error", "Modelo Python no disponible. Verificá que el servicio Python esté corriendo y listo.");
   }
   const resolvedPolygonOutput = pythonResult ?? polygonModelOutput;
 
